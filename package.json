@@ -1,0 +1,31 @@
+{
+  "name": "mock-proxy",
+  "version": "1.0.0",
+  "description": "Proxy local para moquear respuestas para distintos proyectos.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run build",
+    "serve": "ts-node server.ts",
+    "build": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tovaz/mock-proxy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tovaz/mock-proxy/issues"
+  },
+  "homepage": "https://github.com/tovaz/mock-proxy#readme",
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.7.0",
+    "express": "^5.2.1",
+    "http-proxy-middleware": "^4.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}

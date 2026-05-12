@@ -1,0 +1,9 @@
+{
+  "trains": [
+    {
+      "id": "MD-001",
+      "origin": "MAD",
+      "destination": "VAL"
+    }
+  ]
+}
