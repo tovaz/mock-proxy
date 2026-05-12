@@ -8,9 +8,30 @@ interface RouterOptions {
   routes: Route[];
   activeScenes: string[];
   proxyHandler: RequestHandler;
+  mockPayloads: Map<string, unknown>;
 }
 
-export const createRouter = ({ routes, activeScenes, proxyHandler }: RouterOptions): RequestHandler => {
+export const loadMockPayloads = async (routes: Route[]): Promise<Map<string, unknown>> => {
+  const payloads = new Map<string, unknown>();
+
+  const responseFiles = Array.from(
+    new Set(
+      routes
+        .filter((route): route is Route & { resolve: string } => route.enabled && typeof route.resolve === 'string')
+        .map((route) => route.resolve),
+    ),
+  );
+
+  await Promise.all(responseFiles.map(async (responseFile) => {
+    const filePath = path.resolve(process.cwd(), responseFile);
+    const fileContent = await fs.readFile(filePath, 'utf8');
+    payloads.set(responseFile, JSON.parse(fileContent));
+  }));
+
+  return payloads;
+};
+
+export const createRouter = ({ routes, activeScenes, proxyHandler, mockPayloads }: RouterOptions): RequestHandler => {
   return async (req, res, next) => {
     const route = selectRoute(routes, req.path, req.method, activeScenes);
 
@@ -24,18 +45,16 @@ export const createRouter = ({ routes, activeScenes, proxyHandler }: RouterOptio
       return;
     }
 
-    const filePath = path.resolve(process.cwd(), route.resolve);
+    const payload = mockPayloads.get(route.resolve);
 
-    try {
-      const fileContent = await fs.readFile(filePath, 'utf8');
-      res.json(JSON.parse(fileContent));
-    } catch {
-      if (!res.headersSent) {
-        res.status(500).json({
-          error: 'Failed to resolve mock response',
-          path: route.resolve,
-        });
-      }
+    if (payload === undefined) {
+      res.status(500).json({
+        error: 'Failed to resolve mock response',
+        path: route.resolve,
+      });
+      return;
     }
+
+    res.json(payload);
   };
 };

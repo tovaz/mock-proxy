@@ -2,7 +2,7 @@ import express from 'express';
 import { config } from './config';
 import { loadEnvironment, loadRoutes } from './core/env-loader';
 import { createProxyHandler } from './core/proxy';
-import { createRouter } from './core/router';
+import { createRouter, loadMockPayloads } from './core/router';
 import { normalizeActiveScenes } from './core/scene-selector';
 
 interface CliArgs {
@@ -14,26 +14,26 @@ const parseCliArgs = (): CliArgs => {
   const args = process.argv.slice(2);
   const parsed: CliArgs = { scenes: [] };
 
-  for (let index = 0; index < args.length; index += 1) {
-    if (args[index] === '--env') {
-      parsed.env = args[index + 1];
-      index += 1;
+  for (let argIndex = 0; argIndex < args.length; argIndex += 1) {
+    if (args[argIndex] === '--env') {
+      parsed.env = args[argIndex + 1];
+      argIndex += 1;
       continue;
     }
 
-    if (args[index] === '--scenes') {
-      parsed.scenes = (args[index + 1] ?? '')
+    if (args[argIndex] === '--scenes') {
+      parsed.scenes = (args[argIndex + 1] ?? '')
         .split(',')
         .map((scene) => scene.trim())
         .filter(Boolean);
-      index += 1;
+      argIndex += 1;
     }
   }
 
   return parsed;
 };
 
-const startServer = (): void => {
+const startServer = async (): Promise<void> => {
   const { env: envName, scenes: cliScenes } = parseCliArgs();
 
   if (!envName) {
@@ -43,12 +43,14 @@ const startServer = (): void => {
   const env = loadEnvironment(envName);
   const routes = loadRoutes(envName);
   const activeScenes = normalizeActiveScenes([...config.activeScenes, ...cliScenes]);
+  const mockPayloads = await loadMockPayloads(routes);
 
   const app = express();
   app.use(createRouter({
     routes,
     activeScenes,
     proxyHandler: createProxyHandler(env),
+    mockPayloads,
   }));
 
   const port = env.port ?? 3000;
@@ -64,4 +66,8 @@ const startServer = (): void => {
   });
 };
 
-startServer();
+startServer().catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(message);
+  process.exit(1);
+});
