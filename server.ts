@@ -34,15 +34,19 @@ const parseCliArgs = (): CliArgs => {
 };
 
 const startServer = async (): Promise<void> => {
-  const { env: envName, scenes: cliScenes } = parseCliArgs();
+  const { env: cliEnv, scenes: cliScenes } = parseCliArgs();
 
-  if (!envName) {
-    throw new Error('Missing required argument: --env <environment-name>');
+  const usingDefaults = !cliEnv && cliScenes.length === 0;
+  const envName = cliEnv ?? config.env;
+  const baseScenes = cliScenes.length > 0 ? [...config.activeScenes, ...cliScenes] : config.activeScenes;
+
+  if (usingDefaults) {
+    console.log(`No CLI arguments provided; using defaults from config.ts (env: ${envName}, scenes: ${baseScenes.join(', ')})`);
   }
 
   const env = loadEnvironment(envName);
   const routes = loadRoutes(envName);
-  const activeScenes = normalizeActiveScenes([...config.activeScenes, ...cliScenes]);
+  const activeScenes = normalizeActiveScenes(baseScenes);
   const mockPayloads = await loadMockPayloads(routes);
 
   const app = express();

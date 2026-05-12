@@ -2,10 +2,27 @@
 
 Mock proxy server en TypeScript para interceptar rutas y devolver mocks por escenas.
 
+## Configuración por defecto
+
+El archivo `config.ts` define el environment y las escenas que se usan cuando no se pasan parámetros por CLI:
+
+```ts
+// config.ts
+export const config: Config = {
+  env: 'renfe',           // environment por defecto
+  activeScenes: ['default'],
+};
+```
+
 ## Uso
 
 ```bash
 npm install
+
+# Usa el environment y escenas definidos en config.ts
+npm run serve
+
+# Sobreescribe el environment y/o escenas vía CLI
 npm run serve -- --env renfe
 npm run serve -- --env renfe --scenes no-trains
 npm run serve -- --env renfe --scenes no-trains,error-500
